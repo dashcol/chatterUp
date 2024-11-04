@@ -9,6 +9,7 @@
   <body>
     <div class="container">
       <div id="display-messages" class="chat-box"></div>
+      <!-- <div id="status" style="display: none"></div> -->
       <form id="message-form">
         <input type="text" id="message-input" placeholder="Messages" required />
         <button type="submit" id="message-button">Send</button>
@@ -23,6 +24,7 @@
     const displayMessage = document.getElementById("display-messages");
     const messageForm = document.getElementById("message-form");
     const messageInput = document.getElementById("message-input");
+    const status = document.getElementById("status");
 
     const userInfo = JSON.parse(localStorage.getItem("userInfo"));
     socket.emit("join", userInfo);
@@ -30,22 +32,78 @@
     messageForm.addEventListener("submit", (event) => {
       event.preventDefault();
       const message = messageInput.value;
-      socket.emit("send_message", { user: userInfo.user, message });
+      socket.emit("send_message", {
+        user: userInfo.user,
+        message,
+        profilePicture: userInfo.profilePicture,
+      });
       messageInput.value = "";
     });
 
-    socket.on("receive_message", (data) => {
+    socket.on("user_joined", (data) => {
+      const joinMessage = document.createElement("div");
+      joinMessage.classList.add("notification");
+      joinMessage.textContent = `${data.username} has joined the chat!`;
+      displayMessage.appendChild(joinMessage);
+    });
+    function createMessageElement(data) {
       const messageElement = document.createElement("div");
-      messageElement.textContent = `${data.username}: ${data.text}`;
+      messageElement.classList.add("message");
+
+      const profileImage = document.createElement("img");
+      profileImage.src = data.profilePicture;
+      profileImage.classList.add("profile-picture");
+
+      const messageText = document.createElement("span");
+      messageText.textContent = `${data.username}: ${data.text}`;
+
+      messageElement.appendChild(profileImage);
+      messageElement.appendChild(messageText);
+      return messageElement;
+    }
+
+    socket.on("receive_message", (data) => {
+      const messageElement = createMessageElement(data);
       displayMessage.appendChild(messageElement);
     });
 
     socket.on("load_messages", (messages) => {
       messages.forEach((message) => {
-        const messageElement = document.createElement("div");
-        messageElement.textContent = `${message.username}: ${message.text}`;
+        const messageElement = createMessageElement(message);
         displayMessage.appendChild(messageElement);
       });
+    });
+
+    socket.on("user_left", (data) => {
+      const leaveMessage = document.createElement("div");
+      leaveMessage.classList.add("notification");
+      leaveMessage.textContent = `${data.username} has left the chat.`;
+      displayMessage.appendChild(leaveMessage);
+    });
+    const typingTimeout = 1000;
+    let typingTimer;
+
+    messageInput.addEventListener("input", () => {
+      socket.emit("typing", { user: userInfo.user });
+
+      clearTimeout(typingTimer);
+      typingTimer = setTimeout(() => {
+        socket.emit("stop_typing", { user: userInfo.user });
+      }, typingTimeout);
+    });
+
+    const typingIndicator = document.createElement("div");
+    typingIndicator.classList.add("typing-indicator");
+    typingIndicator.textContent = "Someone is typing...";
+    document.body.appendChild(typingIndicator);
+
+    socket.on("user_typing", (data) => {
+      typingIndicator.textContent = `${data.username} is typing...`;
+      typingIndicator.style.display = "block";
+    });
+
+    socket.on("user_stopped_typing", (data) => {
+      typingIndicator.style.display = "none";
     });
   </script>
 </html>
