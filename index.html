@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <title>ChatterUp</title>
+  </head>
+  <body>
+    <div class="user-container">
+      <!-- Toggle Switch -->
+      <div id="toggle-switch">
+        <input type="radio" name="toggle" id="signin" checked />
+        <label for="signin">Sign In</label>
+        <input type="radio" name="toggle" id="signup" />
+        <label for="signup">Sign Up</label>
+      </div>
+
+      <!-- Sign Up Form -->
+      <div class="form-container" id="signupForm">
+        <h2>Sign Up</h2>
+        <form action="#">
+          <input type="text" placeholder="Enter Your Name" id="username" />
+          <input type="email" placeholder="Enter Your Email" id="email" />
+          <input
+            type="password"
+            placeholder="Enter Your Password"
+            id="password"
+          />
+          <input
+            type="password"
+            placeholder="Confirm Your Password"
+            id="confirm-password"
+          />
+          <button id="signup-submit">Submit</button>
+        </form>
+      </div>
+
+      <!-- Sign In Form -->
+      <div class="form-container" id="signinForm">
+        <h2>Sign In</h2>
+        <form action="#">
+          <input type="email" placeholder="Enter Your Email" id="email" />
+          <input
+            type="password"
+            placeholder="Enter Your Password"
+            id="password"
+          />
+          <button id="signin-submit">Submit</button>
+        </form>
+      </div>
+    </div>
+  </body>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const signinRadio = document.getElementById("signin");
+      const signupRadio = document.getElementById("signup");
+      const signinForm = document.getElementById("signinForm");
+      const signupForm = document.getElementById("signupForm");
+
+      function toggleForms() {
+        if (signinRadio.checked) {
+          signinForm.style.display = "block";
+          signupForm.style.display = "none";
+        } else {
+          signinForm.style.display = "none";
+          signupForm.style.display = "block";
+        }
+      }
+      signinRadio.addEventListener("change", toggleForms);
+      signupRadio.addEventListener("change", toggleForms);
+      toggleForms();
+
+      signupForm.querySelector("form").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const username = document.getElementById("username").value;
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        const confirmpassword =
+          document.getElementById("confirm-password").value;
+
+        if (password == confirmpassword) {
+          const userInfo = {
+            user: username,
+            email: email,
+            password: password,
+          };
+          localStorage.setItem("userInfo", JSON.stringify(userInfo));
+          alert("Signed Up sucessfully");
+        } else {
+          alert("Passwords Donot match");
+        }
+      });
+
+      signinForm.querySelector("form").addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+        if (!userInfo) {
+          alert("No user information found. Please sign up first.");
+          return;
+        }
+        const userEmail = signinForm.querySelector('input[type="email"]').value;
+        const userPassword = signinForm.querySelector(
+          'input[type="password"]'
+        ).value;
+
+        if (
+          userInfo.email === userEmail &&
+          userInfo.password === userPassword
+        ) {
+          window.location.href = "client.html";
+        } else {
+          alert("Incorrect email or password.");
+        }
+      });
+    });
+  </script>
+</html>

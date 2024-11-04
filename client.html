@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="clientStyle.css" />
+    <title>ChatterUp</title>
+  </head>
+  <body>
+    <div class="container">
+      <div id="display-messages" class="chat-box"></div>
+      <form id="message-form">
+        <input type="text" id="message-input" placeholder="Messages" required />
+        <button type="submit" id="message-button">Send</button>
+      </form>
+    </div>
+  </body>
+  <script src="http://localhost:3000/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io.connect("http://localhost:3000");
+
+    //
+    const displayMessage = document.getElementById("display-messages");
+    const messageForm = document.getElementById("message-form");
+    const messageInput = document.getElementById("message-input");
+
+    const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+    socket.emit("join", userInfo);
+
+    messageForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const message = messageInput.value;
+      socket.emit("send_message", { user: userInfo.user, message });
+      messageInput.value = "";
+    });
+
+    socket.on("receive_message", (data) => {
+      const messageElement = document.createElement("div");
+      messageElement.textContent = `${data.username}: ${data.text}`;
+      displayMessage.appendChild(messageElement);
+    });
+
+    socket.on("load_messages", (messages) => {
+      messages.forEach((message) => {
+        const messageElement = document.createElement("div");
+        messageElement.textContent = `${message.username}: ${message.text}`;
+        displayMessage.appendChild(messageElement);
+      });
+    });
+  </script>
+</html>
